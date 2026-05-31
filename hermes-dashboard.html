@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #181c27;
+  --bg3: #1e2333;
+  --border: #2a2f42;
+  --text: #e2e8f0;
+  --text2: #8892a4;
+  --accent: #6c8ef7;
+  --accent2: #4ade80;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --green: #4ade80;
+  --red: #f87171;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+  --radius: 10px;
+  --sidebar: 220px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+
+/* SIDEBAR */
+#sidebar {
+  width: var(--sidebar);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+#sidebar .logo {
+  padding: 18px 16px 14px;
+  font-size: 16px; font-weight: 700;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+#sidebar .logo span { font-size: 20px; }
+#sidebar nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+#sidebar nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 13.5px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+#sidebar nav a:hover { color: var(--text); background: var(--bg3); }
+#sidebar nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(108,142,247,0.08); }
+#sidebar nav .section-label { padding: 12px 16px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); opacity: 0.6; }
+.sidebar-badge {
+  margin-left: auto;
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  color: var(--text2);
+}
+#sidebar .footer { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text2); }
+
+/* MAIN */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOPBAR */
+#topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+#topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
+.status-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bg3);
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text2); flex-shrink: 0; }
+.dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+.dot.red { background: var(--red); }
+.dot.yellow { background: var(--warn); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+#refresh-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); padding: 5px 12px; border-radius: 6px;
+  cursor: pointer; font-size: 12px;
+  display: flex; align-items: center; gap: 5px;
+}
+#refresh-btn:hover { background: var(--border); }
+#countdown { font-size: 11px; color: var(--text2); min-width: 50px; text-align: right; }
+#settings-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); padding: 5px 10px; border-radius: 6px;
+  cursor: pointer; font-size: 12px;
+}
+#settings-btn:hover { color: var(--text); }
+
+/* CONTENT */
+#content { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* CARDS */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.kpi-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px;
+}
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text2); margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 700; }
+.kpi-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.kpi-value.green { color: var(--green); }
+.kpi-value.accent { color: var(--accent); }
+.kpi-value.warn { color: var(--warn); }
+
+/* CHARTS */
+.chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 18px; }
+.chart-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px;
+}
+.chart-card h3 { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+.chart-card canvas { max-height: 220px; }
+
+/* PLATFORMS */
+.platforms-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.platform-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 160px;
+}
+.platform-card .pname { font-size: 13px; font-weight: 500; }
+.platform-card .ptime { font-size: 11px; color: var(--text2); }
+
+/* SESSIONS TABLE */
+.table-toolbar {
+  display: flex; gap: 10px; align-items: center;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.table-toolbar input, .table-toolbar select {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); padding: 7px 12px; border-radius: 6px;
+  font-size: 13px;
+}
+.table-toolbar input { flex: 1; min-width: 180px; }
+.table-toolbar input:focus, .table-toolbar select:focus { outline: none; border-color: var(--accent); }
+.table-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.5px; font-weight: 600;
+  white-space: nowrap; cursor: pointer; user-select: none;
+  background: var(--bg3);
+}
+thead th:hover { color: var(--text); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg3); }
+tbody td { padding: 9px 14px; white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 500;
+}
+.badge.cron { background: rgba(108,142,247,0.15); color: var(--accent); }
+.badge.user { background: rgba(74,222,128,0.15); color: var(--green); }
+.badge.api { background: rgba(34,211,238,0.15); color: var(--cyan); }
+.badge.active { background: rgba(74,222,128,0.2); color: var(--green); }
+.badge.ended { background: rgba(139,146,164,0.15); color: var(--text2); }
+.badge.error { background: rgba(239,68,68,0.15); color: var(--red); }
+.badge.unknown { background: rgba(139,146,164,0.1); color: var(--text2); }
+
+/* PAGINATION */
+.pagination { display: flex; align-items: center; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+.pagination button {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); padding: 5px 12px; border-radius: 5px;
+  cursor: pointer; font-size: 12px;
+}
+.pagination button:hover { background: var(--bg3); }
+.pagination button:disabled { opacity: 0.4; cursor: default; }
+.pagination .page-info { font-size: 12px; color: var(--text2); }
+
+/* DETAIL DRAWER */
+#drawer {
+  position: fixed; right: 0; top: 0; bottom: 0;
+  width: 480px; background: var(--bg2);
+  border-left: 1px solid var(--border);
+  z-index: 100; transform: translateX(100%);
+  transition: transform 0.25s ease;
+  display: flex; flex-direction: column;
+}
+#drawer.open { transform: translateX(0); }
+#drawer-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+#drawer-header h3 { font-size: 14px; font-weight: 600; }
+#drawer-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; line-height: 1; }
+#drawer-close:hover { color: var(--text); }
+#drawer-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.field-row { margin-bottom: 12px; }
+.field-row .flabel { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text2); margin-bottom: 3px; }
+.field-row .fval { font-size: 13px; word-break: break-all; }
+.field-row .fval.mono { font-family: monospace; font-size: 12px; background: var(--bg3); padding: 6px 8px; border-radius: 5px; }
+.msgs-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.msg-bubble {
+  padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.5;
+  max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.msg-bubble.user { background: rgba(108,142,247,0.12); border-left: 3px solid var(--accent); }
+.msg-bubble.assistant { background: var(--bg3); border-left: 3px solid var(--text2); }
+.msg-role { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: var(--text2); }
+
+/* LOGS */
+#log-output {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px; line-height: 1.6;
+  height: calc(100vh - 220px);
+  overflow-y: auto;
+  white-space: pre-wrap; word-break: break-all;
+  color: #a8b4c8;
+}
+#log-output .log-err { color: var(--red); }
+#log-output .log-warn { color: var(--warn); }
+#log-output .log-info { color: #64b5f6; }
+.log-toolbar { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+.log-toolbar select, .log-toolbar input {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 13px;
+}
+#log-autoscroll-btn {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text2); padding: 6px 12px; border-radius: 6px;
+  cursor: pointer; font-size: 12px;
+}
+#log-autoscroll-btn.on { border-color: var(--accent); color: var(--accent); }
+
+/* SKILLS */
+.skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.skill-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+}
+.skill-card .sname { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.skill-card .sdesc { font-size: 12px; color: var(--text2); line-height: 1.4; }
+.skill-card .smeta { margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+.tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: var(--bg3); color: var(--text2); }
+.tag.enabled { background: rgba(74,222,128,0.12); color: var(--green); }
+.tag.disabled { background: rgba(239,68,68,0.1); color: var(--red); }
+
+/* CRON */
+.cron-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px; margin-bottom: 10px;
+}
+.cron-card .cname { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.cron-card .cmeta { font-size: 12px; color: var(--text2); display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* SETTINGS MODAL */
+#settings-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 200;
+  align-items: center; justify-content: center;
+}
+#settings-modal.open { display: flex; }
+.modal-box {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px; width: 460px;
+}
+.modal-box h2 { font-size: 16px; margin-bottom: 16px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+.form-group input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px;
+}
+.form-group input:focus { outline: none; border-color: var(--accent); }
+.form-group .hint { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+.btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+
+/* EMPTY / LOADING */
+.empty { text-align: center; padding: 40px; color: var(--text2); }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-row { text-align: center; padding: 30px; color: var(--text2); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4056; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  :root { --sidebar: 60px; }
+  #sidebar nav a span.nav-label { display: none; }
+  #sidebar .logo .logo-text { display: none; }
+  #sidebar .section-label { display: none; }
+  .sidebar-badge { display: none; }
+  .chart-row { grid-template-columns: 1fr; }
+  #drawer { width: 100vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">
+    <span>⚡</span>
+    <span class="logo-text">Hermes</span>
+  </div>
+  <nav>
+    <a onclick="navigate('overview')" id="nav-overview" class="active">
+      📊 <span class="nav-label">Overview</span>
+    </a>
+    <a onclick="navigate('sessions')" id="nav-sessions">
+      💬 <span class="nav-label">Sessions</span>
+      <span class="sidebar-badge" id="badge-sessions">—</span>
+    </a>
+    <a onclick="navigate('logs')" id="nav-logs">
+      📋 <span class="nav-label">Logs</span>
+    </a>
+    <a onclick="navigate('cron')" id="nav-cron">
+      ⏱ <span class="nav-label">Cron</span>
+    </a>
+    <a onclick="navigate('skills')" id="nav-skills">
+      🔧 <span class="nav-label">Skills</span>
+      <span class="sidebar-badge" id="badge-skills">—</span>
+    </a>
+    <a onclick="navigate('profiles')" id="nav-profiles">
+      👤 <span class="nav-label">Profiles</span>
+    </a>
+    <a onclick="navigate('config')" id="nav-config">
+      ⚙️ <span class="nav-label">Config</span>
+    </a>
+  </nav>
+  <div class="footer" id="sidebar-version">v—</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <h1 id="page-title">Overview</h1>
+    <div id="gateway-status" class="status-pill">
+      <div class="dot" id="gateway-dot"></div>
+      <span id="gateway-text">Loading...</span>
+    </div>
+    <button id="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+    <span id="countdown"></span>
+    <button id="settings-btn" onclick="openSettings()">⚙ Settings</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- OVERVIEW -->
+    <div class="view active" id="view-overview">
+      <div class="kpi-row" id="kpi-row">
+        <div class="kpi-card"><div class="kpi-label">Active Sessions</div><div class="kpi-value accent" id="kpi-active">—</div><div class="kpi-sub">right now</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Sessions</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">all time</div></div>
+        <div class="kpi-card"><div class="kpi-label">Cost Today</div><div class="kpi-value warn" id="kpi-cost">—</div><div class="kpi-sub">USD estimated</div></div>
+        <div class="kpi-card"><div class="kpi-label">Tokens Today</div><div class="kpi-value" id="kpi-tokens">—</div><div class="kpi-sub">input + output</div></div>
+        <div class="kpi-card"><div class="kpi-label">Platforms</div><div class="kpi-value green" id="kpi-platforms">—</div><div class="kpi-sub">connected</div></div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text2);margin-bottom:10px;">Connected Platforms</h3>
+        <div class="platforms-row" id="platforms-row">
+          <div class="loading-row"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Sessions — last 24h</h3>
+          <canvas id="chart-sessions-time"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Sessions by Model</h3>
+          <canvas id="chart-models"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-card">
+          <h3>Cost by Model (USD)</h3>
+          <canvas id="chart-cost"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Sessions by Source</h3>
+          <canvas id="chart-source"></canvas>
+        </div>
+      </div>
+
+      <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text2);margin-bottom:10px;">Recent Sessions</h3>
+      <div class="table-wrap" id="overview-sessions-wrap">
+        <div class="loading-row"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- SESSIONS -->
+    <div class="view" id="view-sessions">
+      <div class="table-toolbar">
+        <input type="text" id="sess-search" placeholder="🔍  Search by ID, model, preview..." oninput="filterSessions()">
+        <select id="sess-source" onchange="filterSessions()">
+          <option value="">All Sources</option>
+          <option value="cron">Cron</option>
+          <option value="user">User</option>
+          <option value="api">API</option>
+        </select>
+        <select id="sess-model" onchange="filterSessions()">
+          <option value="">All Models</option>
+        </select>
+        <select id="sess-status" onchange="filterSessions()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="ended">Ended</option>
+        </select>
+        <select id="sess-limit" onchange="loadSessions()">
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+          <option value="200">200 / page</option>
+        </select>
+      </div>
+      <div class="table-wrap" id="sessions-table-wrap">
+        <div class="loading-row"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="sessions-pagination"></div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="view" id="view-logs">
+      <div class="log-toolbar">
+        <select id="log-file" onchange="loadLogs()">
+          <option value="agent">agent</option>
+          <option value="gateway">gateway</option>
+          <option value="error">error</option>
+        </select>
+        <select id="log-lines" onchange="loadLogs()">
+          <option value="100">100 lines</option>
+          <option value="250">250 lines</option>
+          <option value="500">500 lines</option>
+        </select>
+        <input type="text" id="log-filter" placeholder="Filter..." oninput="renderLogs()" style="min-width:180px;">
+        <button id="log-autoscroll-btn" class="on" onclick="toggleAutoscroll()">⬇ Autoscroll ON</button>
+      </div>
+      <div id="log-output"></div>
+    </div>
+
+    <!-- CRON -->
+    <div class="view" id="view-cron">
+      <div id="cron-content"><div class="loading-row"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="view" id="view-skills">
+      <div class="table-toolbar">
+        <input type="text" id="skill-search" placeholder="🔍  Search skills..." oninput="filterSkills()" style="max-width:300px;">
+        <select id="skill-filter" onchange="filterSkills()">
+          <option value="">All</option>
+          <option value="enabled">Enabled</option>
+          <option value="disabled">Disabled</option>
+        </select>
+      </div>
+      <div class="skills-grid" id="skills-grid">
+        <div class="loading-row"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- PROFILES -->
+    <div class="view" id="view-profiles">
+      <div id="profiles-content"><div class="loading-row"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="view" id="view-config">
+      <div id="config-content"><div class="loading-row"><div class="spinner"></div></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SESSION DETAIL DRAWER -->
+<div id="drawer">
+  <div id="drawer-header">
+    <h3 id="drawer-title">Session Detail</h3>
+    <button id="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div id="drawer-body"></div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal">
+  <div class="modal-box">
+    <h2>⚙ Dashboard Settings</h2>
+    <div class="form-group">
+      <label>Hermes Base URL</label>
+      <input type="text" id="cfg-base-url" placeholder="http://127.0.0.1:9119">
+      <div class="hint">Where your Hermes instance is running</div>
+    </div>
+    <div class="form-group">
+      <label>API Token</label>
+      <input type="text" id="cfg-token" placeholder="Paste your __HERMES_SESSION_TOKEN__ here">
+      <div class="hint">Find it in browser console: <code>window.__HERMES_SESSION_TOKEN__</code></div>
+    </div>
+    <div class="form-group">
+      <label>Refresh Interval (seconds)</label>
+      <input type="number" id="cfg-interval" value="10" min="5" max="120">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+let CFG = {
+  baseUrl: localStorage.getItem('hd_base_url') || 'http://127.0.0.1:9119',
+  token:   localStorage.getItem('hd_token')    || '',
+  interval: parseInt(localStorage.getItem('hd_interval') || '10'),
+};
+
+// Try to auto-detect token if on same origin
+try {
+  if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+    if (window.opener && window.opener.__HERMES_SESSION_TOKEN__) {
+      CFG.token = window.opener.__HERMES_SESSION_TOKEN__;
+    }
+  }
+} catch(e) {}
+
+// ─── STATE ────────────────────────────────────────────────
+let allSessions = [];
+let filteredSessions = [];
+let allSkills = [];
+let allLogs = [];
+let charts = {};
+let currentPage = 0;
+let PAGE_SIZE = 50;
+let currentView = 'overview';
+let countdownTimer = null;
+let refreshTimer = null;
+let logAutoscroll = true;
+
+// ─── API ──────────────────────────────────────────────────
+async function api(path) {
+  const headers = CFG.token ? { 'Authorization': `Bearer ${CFG.token}` } : {};
+  const r = await fetch(CFG.baseUrl + path, { headers });
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────
+const pageNames = {
+  overview: 'Overview', sessions: 'Sessions', logs: 'Logs',
+  cron: 'Cron Jobs', skills: 'Skills', profiles: 'Profiles', config: 'Config'
+};
+
+function navigate(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.getElementById('nav-' + view).classList.add('active');
+  document.getElementById('page-title').textContent = pageNames[view] || view;
+  currentView = view;
+  loadView(view);
+}
+
+async function loadView(view) {
+  if (view === 'overview') await loadOverview();
+  else if (view === 'sessions') await loadSessions();
+  else if (view === 'logs') await loadLogs();
+  else if (view === 'cron') await loadCron();
+  else if (view === 'skills') await loadSkills();
+  else if (view === 'profiles') await loadProfiles();
+  else if (view === 'config') await loadConfig();
+}
+
+// ─── REFRESH LOOP ─────────────────────────────────────────
+function startRefreshLoop() {
+  clearInterval(refreshTimer);
+  clearInterval(countdownTimer);
+  let secs = CFG.interval;
+  const cd = document.getElementById('countdown');
+  countdownTimer = setInterval(() => {
+    secs--;
+    cd.textContent = `↻ ${secs}s`;
+    if (secs <= 0) {
+      secs = CFG.interval;
+      refreshAll();
+    }
+  }, 1000);
+}
+
+async function refreshAll() {
+  await loadGatewayStatus();
+  await loadView(currentView);
+}
+
+// ─── GATEWAY STATUS ───────────────────────────────────────
+async function loadGatewayStatus() {
+  try {
+    const data = await api('/api/status');
+    const dot = document.getElementById('gateway-dot');
+    const txt = document.getElementById('gateway-text');
+    const running = data.gateway_state === 'running';
+    dot.className = 'dot ' + (running ? 'green' : 'red');
+    txt.textContent = running ? 'Gateway Running' : 'Gateway Down';
+    document.getElementById('sidebar-version').textContent = 'v' + (data.version || '—');
+    return data;
+  } catch(e) {
+    const dot = document.getElementById('gateway-dot');
+    dot.className = 'dot red';
+    document.getElementById('gateway-text').textContent = 'Cannot connect';
+    return null;
+  }
+}
+
+// ─── OVERVIEW ─────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const [status, sessions] = await Promise.all([
+      api('/api/status'),
+      api('/api/sessions?limit=100&offset=0'),
+    ]);
+
+    // Gateway platforms
+    const platforms = status.gateway_platforms || {};
+    const platHtml = Object.entries(platforms).map(([name, info]) => {
+      const connected = info.state === 'connected';
+      const updated = info.updated_at ? timeAgo(info.updated_at) : '—';
+      return `<div class="platform-card">
+        <div class="dot ${connected ? 'green' : 'red'}" style="flex-shrink:0"></div>
+        <div>
+          <div class="pname">${name}</div>
+          <div class="ptime">${updated}</div>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('platforms-row').innerHTML = platHtml || '<div class="empty">No platforms</div>';
+
+    const connectedCount = Object.values(platforms).filter(p => p.state === 'connected').length;
+    document.getElementById('kpi-platforms').textContent = connectedCount + '/' + Object.keys(platforms).length;
+
+    // Sessions KPIs
+    const sess = sessions.sessions || [];
+    const total = sessions.total || 0;
+    const active = sess.filter(s => s.is_active).length;
+    document.getElementById('kpi-active').textContent = active;
+    document.getElementById('kpi-total').textContent = fmtNum(total);
+    document.getElementById('badge-sessions').textContent = fmtNum(total);
+
+    // Cost & tokens today
+    const today = new Date().toISOString().slice(0,10);
+    const todaySess = sess.filter(s => (s.started_at||'').startsWith(today));
+    const costToday = todaySess.reduce((a,s) => a + (s.estimated_cost_usd || s.actual_cost_usd || 0), 0);
+    const tokensToday = todaySess.reduce((a,s) => a + (s.input_tokens||0) + (s.output_tokens||0), 0);
+    document.getElementById('kpi-cost').textContent = '$' + costToday.toFixed(4);
+    document.getElementById('kpi-tokens').textContent = fmtNum(tokensToday);
+
+    renderCharts(sess, total);
+    renderOverviewTable(sess.slice(0, 10));
+
+  } catch(e) {
+    console.error(e);
+    if (e.message.includes('401') || e.message.includes('Failed')) showSettingsIfNeeded();
+  }
+}
+
+function renderCharts(sessions, total) {
+  // Sessions over last 24h (by hour)
+  const now = new Date();
+  const hours = Array.from({length:24}, (_,i) => {
+    const h = new Date(now - (23-i)*3600000);
+    return h.getHours() + ':00';
+  });
+  const hourBuckets = Array(24).fill(0);
+  sessions.forEach(s => {
+    if (!s.started_at) return;
+    const d = new Date(s.started_at);
+    const diffH = Math.floor((now - d) / 3600000);
+    if (diffH >= 0 && diffH < 24) hourBuckets[23 - diffH]++;
+  });
+
+  renderChart('chart-sessions-time', 'line', hours, [{
+    label: 'Sessions',
+    data: hourBuckets,
+    borderColor: '#6c8ef7',
+    backgroundColor: 'rgba(108,142,247,0.1)',
+    fill: true, tension: 0.4, pointRadius: 2,
+  }]);
+
+  // By model
+  const modelCounts = {};
+  sessions.forEach(s => { if(s.model) modelCounts[s.model] = (modelCounts[s.model]||0)+1; });
+  const models = Object.entries(modelCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  renderChart('chart-models', 'doughnut', models.map(m=>m[0].slice(0,20)), [{
+    data: models.map(m=>m[1]),
+    backgroundColor: ['#6c8ef7','#4ade80','#22d3ee','#f59e0b','#a78bfa','#f87171'],
+    borderColor: '#1e2333', borderWidth: 2,
+  }]);
+
+  // Cost by model
+  const modelCost = {};
+  sessions.forEach(s => {
+    if (s.model && (s.estimated_cost_usd || s.actual_cost_usd)) {
+      modelCost[s.model] = (modelCost[s.model]||0) + (s.estimated_cost_usd || s.actual_cost_usd || 0);
+    }
+  });
+  const costEntries = Object.entries(modelCost).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  renderChart('chart-cost', 'bar', costEntries.map(m=>m[0].slice(0,18)), [{
+    label: 'Cost (USD)',
+    data: costEntries.map(m=>parseFloat(m[1].toFixed(5))),
+    backgroundColor: 'rgba(245,158,11,0.6)',
+    borderColor: '#f59e0b', borderWidth: 1, borderRadius: 4,
+  }]);
+
+  // By source
+  const sourceCounts = {};
+  sessions.forEach(s => { const src = s.source||'unknown'; sourceCounts[src] = (sourceCounts[src]||0)+1; });
+  const sources = Object.entries(sourceCounts);
+  renderChart('chart-source', 'doughnut', sources.map(s=>s[0]), [{
+    data: sources.map(s=>s[1]),
+    backgroundColor: ['#6c8ef7','#4ade80','#22d3ee','#f59e0b','#a78bfa'],
+    borderColor: '#1e2333', borderWidth: 2,
+  }]);
+}
+
+function renderChart(canvasId, type, labels, datasets) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (charts[canvasId]) { charts[canvasId].destroy(); delete charts[canvasId]; }
+  const ctx = canvas.getContext('2d');
+  charts[canvasId] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#8892a4', font: { size: 11 }, usePointStyle: true, padding: 12 },
+          position: type === 'doughnut' ? 'right' : 'top',
+        }
+      },
+      scales: type === 'doughnut' ? {} : {
+        x: { ticks: { color: '#8892a4', font:{size:10} }, grid: { color: '#2a2f42' } },
+        y: { ticks: { color: '#8892a4', font:{size:10} }, grid: { color: '#2a2f42' }, beginAtZero: true },
+      }
+    }
+  });
+}
+
+function renderOverviewTable(sessions) {
+  if (!sessions.length) {
+    document.getElementById('overview-sessions-wrap').innerHTML = '<div class="empty">No sessions</div>';
+    return;
+  }
+  document.getElementById('overview-sessions-wrap').innerHTML = sessionsTableHtml(sessions, false);
+}
+
+// ─── SESSIONS ─────────────────────────────────────────────
+let sessOffset = 0;
+let sessTotal = 0;
+
+async function loadSessions() {
+  const limit = parseInt(document.getElementById('sess-limit')?.value || '50');
+  PAGE_SIZE = limit;
+  const wrap = document.getElementById('sessions-table-wrap');
+  wrap.innerHTML = '<div class="loading-row"><div class="spinner"></div></div>';
+  try {
+    const data = await api(`/api/sessions?limit=${limit}&offset=${sessOffset}`);
+    allSessions = data.sessions || [];
+    sessTotal = data.total || allSessions.length;
+    populateModelFilter(allSessions);
+    filterSessions();
+    renderPagination();
+  } catch(e) {
+    wrap.innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+function filterSessions() {
+  const q = (document.getElementById('sess-search')?.value || '').toLowerCase();
+  const src = document.getElementById('sess-source')?.value || '';
+  const model = document.getElementById('sess-model')?.value || '';
+  const status = document.getElementById('sess-status')?.value || '';
+
+  filteredSessions = allSessions.filter(s => {
+    if (q && !JSON.stringify(s).toLowerCase().includes(q)) return false;
+    if (src && s.source !== src) return false;
+    if (model && s.model !== model) return false;
+    if (status === 'active' && !s.is_active) return false;
+    if (status === 'ended' && s.is_active) return false;
+    return true;
+  });
+
+  document.getElementById('sessions-table-wrap').innerHTML = sessionsTableHtml(filteredSessions, true);
+}
+
+function sessionsTableHtml(sessions, fullCols) {
+  if (!sessions.length) return '<div class="empty">No sessions found</div>';
+  const rows = sessions.map(s => {
+    const cost = s.actual_cost_usd || s.estimated_cost_usd;
+    const tokens = (s.input_tokens||0) + (s.output_tokens||0);
+    const status = s.is_active ? 'active' : (s.end_reason === 'error' ? 'error' : 'ended');
+    return `<tr onclick="openSession('${s.id}')">
+      <td title="${s.id}">${s.id.slice(0,30)}…</td>
+      <td><span class="badge ${s.source||'unknown'}">${s.source||'—'}</span></td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis">${s.model||'—'}</td>
+      <td><span class="badge ${status}">${status}</span></td>
+      <td>${s.message_count||0}</td>
+      ${fullCols ? `<td>${fmtNum(tokens)}</td>` : ''}
+      ${fullCols ? `<td>${cost ? '$'+cost.toFixed(5) : '—'}</td>` : ''}
+      <td>${s.started_at ? timeAgo(s.started_at) : '—'}</td>
+      <td style="color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${(s.preview||'').replace(/"/g,'')}">${(s.preview||'').slice(0,60)}</td>
+    </tr>`;
+  }).join('');
+  return `<table>
+    <thead><tr>
+      <th>ID</th><th>Source</th><th>Model</th><th>Status</th><th>Msgs</th>
+      ${fullCols ? '<th>Tokens</th><th>Cost</th>' : ''}
+      <th>Started</th><th>Preview</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function populateModelFilter(sessions) {
+  const sel = document.getElementById('sess-model');
+  if (!sel) return;
+  const models = [...new Set(sessions.map(s=>s.model).filter(Boolean))].sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Models</option>' + models.map(m=>`<option value="${m}">${m}</option>`).join('');
+  sel.value = cur;
+}
+
+function renderPagination() {
+  const total = sessTotal;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const curPage = Math.floor(sessOffset / PAGE_SIZE);
+  const el = document.getElementById('sessions-pagination');
+  if (!el) return;
+  el.innerHTML = `
+    <button onclick="changePage(-1)" ${curPage===0?'disabled':''}>← Prev</button>
+    <span class="page-info">Page ${curPage+1} of ${pages} (${fmtNum(total)} total)</span>
+    <button onclick="changePage(1)" ${curPage>=pages-1?'disabled':''}>Next →</button>
+  `;
+}
+
+function changePage(dir) {
+  sessOffset = Math.max(0, sessOffset + dir * PAGE_SIZE);
+  loadSessions();
+}
+
+// ─── SESSION DETAIL ───────────────────────────────────────
+async function openSession(id) {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-title').textContent = id.slice(0,30) + '…';
+  document.getElementById('drawer-body').innerHTML = '<div class="loading-row"><div class="spinner"></div></div>';
+  try {
+    const [detail, msgs] = await Promise.all([
+      api(`/api/sessions/${id}`).catch(()=>null),
+      api(`/api/sessions/${id}/messages`).catch(()=>null),
+    ]);
+    const s = detail || allSessions.find(s=>s.id===id) || {};
+    const cost = s.actual_cost_usd || s.estimated_cost_usd;
+    const tokens = (s.input_tokens||0) + (s.output_tokens||0);
+    let html = `
+      <div class="field-row"><div class="flabel">ID</div><div class="fval mono">${s.id||id}</div></div>
+      <div class="field-row"><div class="flabel">Model</div><div class="fval">${s.model||'—'}</div></div>
+      <div class="field-row"><div class="flabel">Source</div><div class="fval"><span class="badge ${s.source||'unknown'}">${s.source||'—'}</span></div></div>
+      <div class="field-row"><div class="flabel">Status</div><div class="fval"><span class="badge ${s.is_active?'active':'ended'}">${s.is_active?'Active':'Ended'}</span></div></div>
+      <div class="field-row"><div class="flabel">Started</div><div class="fval">${s.started_at ? new Date(s.started_at).toLocaleString() : '—'}</div></div>
+      <div class="field-row"><div class="flabel">Ended</div><div class="fval">${s.ended_at ? new Date(s.ended_at).toLocaleString() : '—'}</div></div>
+      <div class="field-row"><div class="flabel">End Reason</div><div class="fval">${s.end_reason||'—'}</div></div>
+      <div class="field-row"><div class="flabel">Messages</div><div class="fval">${s.message_count||0}</div></div>
+      <div class="field-row"><div class="flabel">Tool Calls</div><div class="fval">${s.tool_call_count||0}</div></div>
+      <div class="field-row"><div class="flabel">Tokens</div><div class="fval">${fmtNum(tokens)} (in: ${fmtNum(s.input_tokens||0)} / out: ${fmtNum(s.output_tokens||0)})</div></div>
+      <div class="field-row"><div class="flabel">Reasoning Tokens</div><div class="fval">${fmtNum(s.reasoning_tokens||0)}</div></div>
+      <div class="field-row"><div class="flabel">Cache Read</div><div class="fval">${fmtNum(s.cache_read_tokens||0)}</div></div>
+      <div class="field-row"><div class="flabel">Cost (est.)</div><div class="fval">${cost ? '$'+cost.toFixed(6) : '—'} (${s.cost_status||'—'})</div></div>
+      <div class="field-row"><div class="flabel">Billing Provider</div><div class="fval">${s.billing_provider||'—'}</div></div>
+      <div class="field-row"><div class="flabel">Billing Mode</div><div class="fval">${s.billing_mode||'—'}</div></div>
+    `;
+    if (msgs && msgs.messages && msgs.messages.length) {
+      html += `<div class="field-row" style="margin-top:16px"><div class="flabel">Messages (${msgs.messages.length})</div></div>`;
+      html += '<div class="msgs-list">' + msgs.messages.slice(0,20).map(m => `
+        <div class="msg-bubble ${m.role}">
+          <div class="msg-role">${m.role}</div>
+          ${(m.content||'').slice(0,400).replace(/</g,'&lt;')}${(m.content||'').length>400?'…':''}
+        </div>`).join('') + '</div>';
+    }
+    document.getElementById('drawer-body').innerHTML = html;
+  } catch(e) {
+    document.getElementById('drawer-body').innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+}
+
+// ─── LOGS ─────────────────────────────────────────────────
+let rawLogs = [];
+
+async function loadLogs() {
+  const file = document.getElementById('log-file')?.value || 'agent';
+  const lines = document.getElementById('log-lines')?.value || '100';
+  try {
+    const data = await api(`/api/logs?file=${file}&lines=${lines}`);
+    rawLogs = data.lines || [];
+    renderLogs();
+  } catch(e) {
+    document.getElementById('log-output').textContent = 'Error: ' + e.message;
+  }
+}
+
+function renderLogs() {
+  const filter = (document.getElementById('log-filter')?.value || '').toLowerCase();
+  const el = document.getElementById('log-output');
+  const filtered = filter ? rawLogs.filter(l => l.toLowerCase().includes(filter)) : rawLogs;
+  el.innerHTML = filtered.map(line => {
+    const escaped = line.replace(/</g,'&lt;');
+    if (/ERROR|CRITICAL/i.test(line)) return `<span class="log-err">${escaped}</span>`;
+    if (/WARNING|WARN/i.test(line)) return `<span class="log-warn">${escaped}</span>`;
+    if (/INFO/i.test(line)) return `<span class="log-info">${escaped}</span>`;
+    return escaped;
+  }).join('');
+  if (logAutoscroll) el.scrollTop = el.scrollHeight;
+}
+
+function toggleAutoscroll() {
+  logAutoscroll = !logAutoscroll;
+  const btn = document.getElementById('log-autoscroll-btn');
+  btn.textContent = `⬇ Autoscroll ${logAutoscroll ? 'ON' : 'OFF'}`;
+  btn.className = logAutoscroll ? 'on' : '';
+}
+
+// ─── CRON ─────────────────────────────────────────────────
+async function loadCron() {
+  const el = document.getElementById('cron-content');
+  try {
+    const data = await api('/api/cron/jobs');
+    const jobs = Array.isArray(data) ? data : (data.jobs || data.cron_jobs || Object.values(data));
+    if (!jobs.length) { el.innerHTML = '<div class="empty">No cron jobs configured</div>'; return; }
+    el.innerHTML = jobs.map(j => `
+      <div class="cron-card">
+        <div class="cname">${j.name || j.id || 'Unnamed Job'}</div>
+        <div class="cmeta">
+          <span>Schedule: <strong>${j.schedule || j.cron || j.expression || '—'}</strong></span>
+          ${j.enabled !== undefined ? `<span>Status: <strong>${j.enabled ? '✓ Enabled' : '✗ Disabled'}</strong></span>` : ''}
+          ${j.last_run ? `<span>Last run: <strong>${timeAgo(j.last_run)}</strong></span>` : ''}
+          ${j.next_run ? `<span>Next run: <strong>${timeAgo(j.next_run)}</strong></span>` : ''}
+          ${j.skill ? `<span>Skill: <strong>${j.skill}</strong></span>` : ''}
+        </div>
+        ${j.command||j.script ? `<div style="margin-top:8px;font-size:12px;font-family:monospace;color:var(--text2)">${(j.command||j.script).slice(0,120)}</div>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty">Error loading cron jobs: ${e.message}</div>`;
+  }
+}
+
+// ─── SKILLS ───────────────────────────────────────────────
+async function loadSkills() {
+  const el = document.getElementById('skills-grid');
+  try {
+    allSkills = await api('/api/skills');
+    document.getElementById('badge-skills').textContent = allSkills.length;
+    filterSkills();
+  } catch(e) {
+    el.innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+function filterSkills() {
+  const q = (document.getElementById('skill-search')?.value || '').toLowerCase();
+  const filter = document.getElementById('skill-filter')?.value || '';
+  const filtered = allSkills.filter(s => {
+    if (q && !s.name?.toLowerCase().includes(q) && !s.description?.toLowerCase().includes(q)) return false;
+    if (filter === 'enabled' && !s.enabled) return false;
+    if (filter === 'disabled' && s.enabled) return false;
+    return true;
+  });
+  document.getElementById('skills-grid').innerHTML = filtered.map(s => `
+    <div class="skill-card">
+      <div class="sname">${s.name}</div>
+      <div class="sdesc">${s.description||'No description'}</div>
+      <div class="smeta">
+        <span class="tag ${s.enabled ? 'enabled' : 'disabled'}">${s.enabled ? 'enabled' : 'disabled'}</span>
+        ${s.category ? `<span class="tag">${s.category}</span>` : ''}
+      </div>
+    </div>`).join('') || '<div class="empty">No skills found</div>';
+}
+
+// ─── PROFILES ─────────────────────────────────────────────
+async function loadProfiles() {
+  const el = document.getElementById('profiles-content');
+  try {
+    const data = await api('/api/profiles');
+    const profiles = Array.isArray(data) ? data : (data.profiles || Object.entries(data).map(([k,v])=>({name:k,...v})));
+    el.innerHTML = '<div class="skills-grid">' + profiles.map(p => `
+      <div class="skill-card">
+        <div class="sname">${p.name || p.id || 'Unnamed'}</div>
+        <div class="sdesc">${p.description || p.system_prompt?.slice(0,100) || 'No description'}</div>
+        <div class="smeta">
+          ${p.model ? `<span class="tag">${p.model}</span>` : ''}
+          ${p.active ? `<span class="tag enabled">active</span>` : ''}
+        </div>
+      </div>`).join('') + '</div>';
+  } catch(e) {
+    el.innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+// ─── CONFIG ───────────────────────────────────────────────
+async function loadConfig() {
+  const el = document.getElementById('config-content');
+  try {
+    const data = await api('/api/config');
+    el.innerHTML = `<div class="table-wrap" style="max-height:calc(100vh - 200px);overflow-y:auto">
+      <table><thead><tr><th>Key</th><th>Value</th></tr></thead>
+      <tbody>${Object.entries(data).map(([k,v]) => `
+        <tr><td style="color:var(--text2);width:220px">${k}</td>
+        <td><code style="font-size:12px;word-break:break-all">${JSON.stringify(v).slice(0,200)}</code></td></tr>`
+      ).join('')}</tbody></table></div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('cfg-base-url').value = CFG.baseUrl;
+  document.getElementById('cfg-token').value = CFG.token;
+  document.getElementById('cfg-interval').value = CFG.interval;
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function saveSettings() {
+  CFG.baseUrl = document.getElementById('cfg-base-url').value.trim().replace(/\/$/, '');
+  CFG.token = document.getElementById('cfg-token').value.trim();
+  CFG.interval = parseInt(document.getElementById('cfg-interval').value) || 10;
+  localStorage.setItem('hd_base_url', CFG.baseUrl);
+  localStorage.setItem('hd_token', CFG.token);
+  localStorage.setItem('hd_interval', CFG.interval);
+  closeSettings();
+  startRefreshLoop();
+  refreshAll();
+}
+
+function showSettingsIfNeeded() {
+  if (!CFG.token) openSettings();
+}
+
+// ─── UTILS ────────────────────────────────────────────────
+function fmtNum(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return n?.toLocaleString() ?? '0';
+}
+
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(diff/1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+async function init() {
+  if (!CFG.token) {
+    // If on same origin, try to get token from page
+    try {
+      const r = await fetch(CFG.baseUrl + '/api/status');
+      if (!r.ok) showSettingsIfNeeded();
+    } catch { showSettingsIfNeeded(); }
+  }
+  await loadGatewayStatus();
+  await loadOverview();
+  startRefreshLoop();
+}
+
+init();
+</script>
+</body>
+</html>
