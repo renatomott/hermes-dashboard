@@ -70,24 +70,49 @@ button { font-family: inherit; cursor: pointer; }
 input, select { font-family: inherit; }
 
 /* ─── BACKGROUND LAYERS ─────────────────────────────────────────────────── */
+/* Dramatic orbs are REQUIRED for glass to look good — the blur needs something to show through */
 #orb1 {
-  position: fixed; top: -180px; left: -100px;
-  width: 600px; height: 600px;
-  background: radial-gradient(ellipse at center, rgba(124,58,237,0.12) 0%, transparent 65%);
+  position: fixed; top: -220px; left: -160px;
+  width: 800px; height: 800px;
+  background: radial-gradient(ellipse at 40% 40%,
+    rgba(124,58,237,0.45) 0%,
+    rgba(139,92,246,0.2) 30%,
+    transparent 70%);
   pointer-events: none; z-index: 0;
+  animation: orbfloat 12s ease-in-out infinite;
 }
 #orb2 {
-  position: fixed; bottom: -100px; right: -60px;
-  width: 480px; height: 480px;
-  background: radial-gradient(ellipse at center, rgba(6,182,212,0.08) 0%, transparent 65%);
+  position: fixed; bottom: -160px; right: -100px;
+  width: 640px; height: 640px;
+  background: radial-gradient(ellipse at 60% 60%,
+    rgba(6,182,212,0.35) 0%,
+    rgba(34,211,238,0.15) 30%,
+    transparent 70%);
   pointer-events: none; z-index: 0;
+  animation: orbfloat 16s ease-in-out infinite reverse;
+}
+/* Third orb for depth */
+#orb3 {
+  position: fixed; top: 45%; left: 35%;
+  width: 500px; height: 500px;
+  background: radial-gradient(ellipse at center,
+    rgba(236,72,153,0.12) 0%,
+    rgba(168,85,247,0.06) 40%,
+    transparent 70%);
+  pointer-events: none; z-index: 0;
+  animation: orbfloat 20s ease-in-out infinite;
+}
+@keyframes orbfloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(20px,-30px) scale(1.03); }
+  66% { transform: translate(-15px,20px) scale(0.97); }
 }
 #grid {
   position: fixed; inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
   pointer-events: none; z-index: 0;
 }
 
@@ -108,9 +133,11 @@ input, select { font-family: inherit; }
   grid-area: topbar;
   display: flex; align-items: center;
   padding: 0 16px; gap: 12px;
-  background: rgba(13,13,20,0.9);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  background: rgba(6,4,14,0.55);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06);
   z-index: 50;
 }
 
@@ -200,8 +227,11 @@ input, select { font-family: inherit; }
 #sidebar {
   grid-area: sidebar;
   display: flex; flex-direction: column;
-  background: var(--bg1);
-  border-right: 1px solid var(--border);
+  background: rgba(10,8,20,0.5);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.03), 1px 0 20px rgba(0,0,0,0.3);
   overflow-y: auto; overflow-x: hidden;
   padding: 12px 8px;
 }
@@ -221,11 +251,13 @@ input, select { font-family: inherit; }
   cursor: pointer; background: none; width: 100%; text-align: left;
   white-space: nowrap;
 }
-.nav-item:hover { background: var(--glass2); color: var(--text); }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: var(--text); }
 .nav-item.active {
-  background: rgba(124,58,237,0.12);
-  border-color: rgba(124,58,237,0.2);
+  background: rgba(124,58,237,0.15);
+  backdrop-filter: blur(12px);
+  border-color: rgba(139,92,246,0.3);
   color: var(--violet3);
+  box-shadow: inset 0 1px 0 rgba(167,139,250,0.1);
 }
 .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
 .nav-item.active svg { opacity: 1; }
@@ -258,7 +290,7 @@ input, select { font-family: inherit; }
 #main {
   grid-area: main;
   overflow-y: auto;
-  background: var(--bg);
+  background: transparent;
   padding: 24px;
 }
 
@@ -294,14 +326,29 @@ input, select { font-family: inherit; }
 .mb12 { margin-bottom: 12px; }
 .mb20 { margin-bottom: 20px; }
 
-/* ─── CARD ──────────────────────────────────────────────────────────────── */
+/* ─── CARD (glass) ──────────────────────────────────────────────────────── */
 .card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--r2);
-  transition: border-color 0.2s;
+  /* Inner top highlight — the glass illusion */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 4px 24px rgba(0,0,0,0.35),
+    0 1px 4px rgba(0,0,0,0.2);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.card:hover { border-color: var(--border2); }
+.card:hover {
+  border-color: rgba(255,255,255,0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.13),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 8px 32px rgba(0,0,0,0.4),
+    0 2px 8px rgba(0,0,0,0.25);
+}
 .card-pad { padding: 16px 18px; }
 .card-line { padding: 14px 16px; }
 
@@ -309,18 +356,24 @@ input, select { font-family: inherit; }
 .kpi-card {
   padding: 18px 20px;
   position: relative; overflow: hidden;
+  /* Each KPI card has a stronger glass with a color tint */
 }
+.kpi-card.c-cyan   { background: rgba(6,182,212,0.06);   border-color: rgba(34,211,238,0.15);  box-shadow: inset 0 1px 0 rgba(103,232,249,0.15), 0 4px 24px rgba(6,182,212,0.1),  0 1px 4px rgba(0,0,0,0.2); }
+.kpi-card.c-violet { background: rgba(124,58,237,0.07);  border-color: rgba(139,92,246,0.18);  box-shadow: inset 0 1px 0 rgba(167,139,250,0.15), 0 4px 24px rgba(124,58,237,0.12), 0 1px 4px rgba(0,0,0,0.2); }
+.kpi-card.c-gold   { background: rgba(217,119,6,0.06);   border-color: rgba(245,158,11,0.15);  box-shadow: inset 0 1px 0 rgba(252,211,77,0.15),  0 4px 24px rgba(217,119,6,0.1),  0 1px 4px rgba(0,0,0,0.2); }
+.kpi-card.c-pink   { background: rgba(219,39,119,0.06);  border-color: rgba(236,72,153,0.15);  box-shadow: inset 0 1px 0 rgba(249,168,212,0.15), 0 4px 24px rgba(219,39,119,0.1), 0 1px 4px rgba(0,0,0,0.2); }
+.kpi-card.c-mint   { background: rgba(16,185,129,0.06);  border-color: rgba(52,211,153,0.15);  box-shadow: inset 0 1px 0 rgba(110,231,183,0.15), 0 4px 24px rgba(16,185,129,0.1), 0 1px 4px rgba(0,0,0,0.2); }
 .kpi-card::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
   height: 2px;
   border-radius: var(--r2) var(--r2) 0 0;
 }
-.kpi-card.c-cyan::before    { background: linear-gradient(90deg, var(--cyan2), transparent); }
-.kpi-card.c-violet::before  { background: linear-gradient(90deg, var(--violet2), transparent); }
-.kpi-card.c-gold::before    { background: linear-gradient(90deg, var(--gold2), transparent); }
-.kpi-card.c-pink::before    { background: linear-gradient(90deg, var(--pink2), transparent); }
-.kpi-card.c-mint::before    { background: linear-gradient(90deg, var(--mint2), transparent); }
+.kpi-card.c-cyan::before    { background: linear-gradient(90deg, var(--cyan2) 0%, rgba(34,211,238,0.3) 60%, transparent); }
+.kpi-card.c-violet::before  { background: linear-gradient(90deg, var(--violet2) 0%, rgba(139,92,246,0.3) 60%, transparent); }
+.kpi-card.c-gold::before    { background: linear-gradient(90deg, var(--gold2) 0%, rgba(245,158,11,0.3) 60%, transparent); }
+.kpi-card.c-pink::before    { background: linear-gradient(90deg, var(--pink2) 0%, rgba(236,72,153,0.3) 60%, transparent); }
+.kpi-card.c-mint::before    { background: linear-gradient(90deg, var(--mint2) 0%, rgba(52,211,153,0.3) 60%, transparent); }
 .kpi-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
@@ -353,12 +406,16 @@ input, select { font-family: inherit; }
 .plat-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .plat-chip {
   display: flex; align-items: center; gap: 7px;
-  padding: 6px 12px; border-radius: 30px;
-  background: var(--bg2); border: 1px solid var(--border);
+  padding: 6px 14px; border-radius: 30px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.09);
   font-size: 12px;
-  transition: border-color 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s;
 }
-.plat-chip:hover { border-color: var(--border2); }
+.plat-chip:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.07); }
 .pdot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -409,13 +466,22 @@ input, select { font-family: inherit; }
 .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text3); pointer-events: none; }
 .search-wrap input { padding-left: 32px !important; }
 .tinput, .tselect {
-  background: var(--bg2); border: 1px solid var(--border2);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.09);
   color: var(--text); padding: 7px 11px; border-radius: var(--r);
   font-size: 12px; font-family: inherit;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   width: 100%;
 }
-.tinput:focus, .tselect:focus { outline: none; border-color: var(--violet2); }
+.tinput:focus, .tselect:focus {
+  outline: none;
+  border-color: rgba(139,92,246,0.5);
+  background: rgba(255,255,255,0.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 3px rgba(124,58,237,0.1);
+}
 .tselect { cursor: pointer; }
 
 /* ─── TABLE ─────────────────────────────────────────────────────────────── */
@@ -484,8 +550,11 @@ tbody td {
 #drawer {
   position: fixed; right: 0; top: 0; bottom: 0;
   width: 480px;
-  background: var(--bg1);
-  border-left: 1px solid var(--border2);
+  background: rgba(8,6,18,0.65);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-left: 1px solid rgba(255,255,255,0.1);
+  box-shadow: -4px 0 40px rgba(0,0,0,0.5), inset 1px 0 0 rgba(255,255,255,0.05);
   z-index: 200;
   transform: translateX(100%);
   transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
@@ -530,8 +599,11 @@ tbody td {
   margin-bottom: 14px;
 }
 .df-stat {
-  background: var(--bg3); border-radius: 8px; padding: 10px 12px;
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(12px);
+  border-radius: 8px; padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .df-stat .n {
   font-size: 18px; font-weight: 700; letter-spacing: -0.5px;
@@ -561,7 +633,11 @@ tbody td {
 
 /* ─── LOGS ──────────────────────────────────────────────────────────────── */
 #log-out {
-  background: var(--bg1); border: 1px solid var(--border);
+  background: rgba(4,3,12,0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   border-radius: var(--r2); padding: 14px 16px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11.5px; line-height: 1.7;
@@ -651,14 +727,22 @@ tbody td {
 /* ─── MODAL ─────────────────────────────────────────────────────────────── */
 #modal-overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
   z-index: 300; align-items: center; justify-content: center;
 }
 #modal-overlay.open { display: flex; }
 .modal {
-  background: var(--bg1); border: 1px solid var(--border2);
-  border-radius: 16px; padding: 28px; width: 460px; max-width: 90vw;
-  box-shadow: var(--shadow2);
+  background: rgba(14,10,28,0.7);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px; padding: 28px; width: 460px; max-width: 90vw;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 24px 80px rgba(0,0,0,0.6),
+    0 8px 24px rgba(0,0,0,0.4);
 }
 .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
 .field { margin-bottom: 14px; }
@@ -684,13 +768,19 @@ tbody td {
 /* ─── CONFIRM ───────────────────────────────────────────────────────────── */
 #confirm-overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
   z-index: 400; align-items: center; justify-content: center;
 }
 #confirm-overlay.open { display: flex; }
 .confirm-box {
-  background: var(--bg1); border: 1px solid var(--border2);
+  background: rgba(14,10,28,0.72);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 14px; padding: 24px; width: 360px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 16px 48px rgba(0,0,0,0.5);
 }
 .confirm-msg { font-size: 14px; margin-bottom: 18px; color: var(--text2); line-height: 1.5; }
 .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
@@ -706,7 +796,10 @@ tbody td {
   font-size: 13px; font-weight: 450;
   border: 1px solid; pointer-events: all;
   animation: toastin 0.2s ease;
-  backdrop-filter: blur(20px); max-width: 320px;
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4);
+  max-width: 320px;
 }
 .toast.ok  { background: rgba(16,185,129,0.12); border-color: rgba(52,211,153,0.25); color: var(--mint2); }
 .toast.err { background: rgba(220,38,38,0.12);  border-color: rgba(239,68,68,0.25);  color: var(--red2); }
@@ -767,6 +860,7 @@ tbody td {
 <!-- BG -->
 <div id="orb1"></div>
 <div id="orb2"></div>
+<div id="orb3"></div>
 <div id="grid"></div>
 
 <div id="app">
